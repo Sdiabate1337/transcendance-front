@@ -3,39 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Transcendence</title>
-    <link rel="stylesheet" href="assets/css/style.css">
-    <!-- Add Three.js from CDN -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <title>Transcendence - Test Mode</title>
+    <link rel="stylesheet" href="assets/css/main.css">
+
+    <!-- Add this in the head section -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code&display=swap" rel="stylesheet">
 </head>
 <body>
     <div id="app">
-        <!-- Language selector -->
-        <div class="language-selector" role="navigation" aria-label="Language selection">
-            <button data-lang="en" aria-label="Switch to English">EN</button>
-            <button data-lang="fr" aria-label="Switch to French">FR</button>
-            <button data-lang="es" aria-label="Switch to Spanish">ES</button>
-        </div>
+        <!-- Navigation -->
+        <nav id="main-nav">
+            <div class="nav-content">
+                <div class="nav-left">
+                    <span class="logo">Transcendence</span>
+                </div>
+                <div class="nav-right">
+                    <!-- Navigation Links -->
+                    <div class="nav-links">
+                        <a href="/" data-route="/" class="nav-link">Home</a>
+                        <a href="/game" data-route="/game" class="nav-link">Game</a>
+                        <a href="/chat" data-route="/chat" class="nav-link">Chat</a>
+                        <a href="/profile" data-route="/profile" class="nav-link">Profile</a>
+                    </div>
 
-        <!-- Game container -->
-        <div id="game-container" role="main" aria-label="3D Pong Game">
-            <!-- Game canvas will be inserted here -->
-        </div>
+                    <!-- UI Controls -->
+                    <div class="ui-controls">
+                        <button id="high-contrast" aria-label="Toggle high contrast">
+                            Theme
+                        </button>
+                        <button id="font-size" aria-label="Adjust font size">
+                            Font
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
 
-        <!-- Game controls -->
-        <div class="game-controls" role="group" aria-label="Game controls">
-            <button id="start-game" aria-label="Start game">Start Game</button>
-            <button id="pause-game" aria-label="Pause game">Pause</button>
-        </div>
+        <!-- Main Content -->
+        <main id="main-content"></main>
 
-        <!-- Accessibility options -->
-        <div class="accessibility-options" role="complementary">
-            <button id="high-contrast" aria-label="Toggle high contrast">High Contrast</button>
-            <input type="range" id="text-size" min="12" max="24" value="16" 
-                   aria-label="Adjust text size">
+        <!-- Debug Panel -->
+        <div class="debug-panel">
+            <div id="current-route">Current Route: /</div>
+            <div id="current-state">Current State: {}</div>
+            <div id="websocket-status">WebSocket: Disconnected</div>
         </div>
     </div>
 
+    <!-- Test Scripts -->
     <script type="module" src="src/app.js"></script>
 </body>
 </html>
