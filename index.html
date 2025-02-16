@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Transcendence</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <!-- Add Three.js from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+    <div id="app">
+        <!-- Language selector -->
+        <div class="language-selector" role="navigation" aria-label="Language selection">
+            <button data-lang="en" aria-label="Switch to English">EN</button>
+            <button data-lang="fr" aria-label="Switch to French">FR</button>
+            <button data-lang="es" aria-label="Switch to Spanish">ES</button>
+        </div>
+
+        <!-- Game container -->
+        <div id="game-container" role="main" aria-label="3D Pong Game">
+            <!-- Game canvas will be inserted here -->
+        </div>
+
+        <!-- Game controls -->
+        <div class="game-controls" role="group" aria-label="Game controls">
+            <button id="start-game" aria-label="Start game">Start Game</button>
+            <button id="pause-game" aria-label="Pause game">Pause</button>
+        </div>
+
+        <!-- Accessibility options -->
+        <div class="accessibility-options" role="complementary">
+            <button id="high-contrast" aria-label="Toggle high contrast">High Contrast</button>
+            <input type="range" id="text-size" min="12" max="24" value="16" 
+                   aria-label="Adjust text size">
+        </div>
+    </div>
+
+    <script type="module" src="src/app.js"></script>
+</body>
+</html>
