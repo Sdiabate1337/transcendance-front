@@ -1,19 +1,31 @@
 // API Configuration
 export const API_CONFIG = {
-    // Base URLs
+    // We'll add a flag to indicate if we're using mock data
+    USE_MOCK: true,
+    
+    // This will be changed when backend is ready
     BASE_URL: 'http://localhost:3000',
     
+    AUTH: {
+        LOGIN: '/api/auth/42/login',
+        CALLBACK: '/api/auth/42/callback',
+        CHECK: '/api/auth/check',
+        LOGOUT: '/api/auth/logout'
+    },
+
+    // Mock data for development
+    MOCK_DATA: {
+        user: {
+            id: 1,
+            username: 'testUser42',
+            avatar: 'https://cdn.intra.42.fr/users/default.png',
+            status: 'online'
+        }
+    },
     // WebSocket endpoints (these match the ones used in your App.js)
     WEBSOCKET_GAME: 'ws://localhost:3000/game',
     WEBSOCKET_CHAT: 'ws://localhost:3000/chat',
     
-    // Authentication endpoints
-    AUTH: {
-        LOGIN: '/api/auth/42/login',
-        CALLBACK: '/api/auth/42/callback',
-        LOGOUT: '/api/auth/logout',
-        TWO_FACTOR: '/api/auth/2fa'
-    },
     
     // Game endpoints
     GAME: {
@@ -48,4 +60,4 @@ export const APP_SETTINGS = {
         LIGHT: 'light',
         HIGH_CONTRAST: 'high-contrast'
     }
-};
+};s

@@ -1,163 +1,128 @@
+import { LoginPage } from './components/auth/LoginPage.js';
 import { API_CONFIG } from './config/api.js';
-import { WebSocketService } from './services/WebSocketService.js';
-import { stateService } from './services/StateService.js';
 import { RouterService } from './services/RouterService.js';
+import { stateService } from './services/StateService.js';
 
 class App {
     constructor() {
+        this.initializeAuthState();
         this.router = new RouterService();
         this.initializeRouter();
-        this.initializeServices();
         this.setupEventListeners();
     }
 
+    initializeAuthState() {
+        stateService.setState('auth', {
+            isAuthenticated: false,
+            user: null,
+            loading: true
+        });
+
+        // Check for stored auth token
+        const token = localStorage.getItem('auth_token');
+        if (token) {
+            this.checkAuthStatus(token);
+        } else {
+            stateService.setState('auth', {
+                isAuthenticated: false,
+                user: null,
+                loading: false
+            });
+        }
+    }
+
     initializeRouter() {
-        // Define routes
+        // Add routes
         this.router.addRoute('/', () => this.loadHomePage());
-        this.router.addRoute('/game', () => this.loadGamePage());
-        this.router.addRoute('/chat', () => this.loadChatPage());
-        this.router.addRoute('/profile', () => this.loadProfilePage());
+        this.router.addRoute('/login', () => new LoginPage());
+        this.router.addRoute('/game', () => this.loadGamePage(), true);
+        this.router.addRoute('/chat', () => this.loadChatPage(), true);
+        this.router.addRoute('/profile', () => this.loadProfilePage(), true);
         this.router.addRoute('/404', () => this.load404Page());
 
         // Handle initial route
-        this.router.handleRoute(window.location.pathname);
+        const path = window.location.pathname;
+        this.router.navigateTo(path, false);
     }
 
-    initializeServices() {
-        // Initialize WebSocket connections
-        this.gameSocket = new WebSocketService(API_CONFIG.WEBSOCKET_GAME);
-        this.chatSocket = new WebSocketService(API_CONFIG.WEBSOCKET_CHAT);
-        
-        this.gameSocket.connect();
-        this.chatSocket.connect();
+    async checkAuthStatus(token) {
+        try {
+            const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.AUTH.CHECK}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
 
-        // Initialize state
-        this.initializeState();
+            if (response.ok) {
+                const data = await response.json();
+                stateService.setState('auth', {
+                    isAuthenticated: true,
+                    user: data.user,
+                    loading: false
+                });
+            } else {
+                this.handleLogout();
+            }
+        } catch (error) {
+            console.error('Auth check failed:', error);
+            this.handleLogout();
+        }
     }
 
-    initializeState() {
-        stateService.setState('ui', {
-            theme: localStorage.getItem('theme') || 'light',
-            language: localStorage.getItem('language') || 'en',
-            fontSize: localStorage.getItem('fontSize') || 'medium'
+    handleLogout() {
+        localStorage.removeItem('auth_token');
+        stateService.setState('auth', {
+            isAuthenticated: false,
+            user: null,
+            loading: false
         });
-
-        stateService.subscribe('ui', (uiState) => {
-            this.handleUiStateChange(uiState);
-        });
+        this.router.navigateTo('/login');
     }
 
     setupEventListeners() {
-        // Handle navigation clicks
-        document.addEventListener('click', (e) => {
-            const link = e.target.closest('[data-route]');
-            if (link) {
-                e.preventDefault();
-                const route = link.dataset.route;
-                this.router.navigateTo(route);
-            }
-        });
-
         // Handle theme toggle
-        document.getElementById('high-contrast').addEventListener('click', () => {
-            const currentTheme = stateService.getState('ui').theme;
-            const newTheme = currentTheme === 'light' ? 'high-contrast' : 'light';
-            stateService.setState('ui', { 
-                ...stateService.getState('ui'), 
-                theme: newTheme 
+        const themeButton = document.getElementById('high-contrast');
+        if (themeButton) {
+            themeButton.addEventListener('click', () => {
+                document.body.classList.toggle('high-contrast');
             });
-        });
+        }
 
         // Handle font size changes
-        document.getElementById('font-size').addEventListener('click', () => {
-            const sizes = ['small', 'medium', 'large'];
-            const currentSize = stateService.getState('ui').fontSize;
-            const currentIndex = sizes.indexOf(currentSize);
-            const newSize = sizes[(currentIndex + 1) % sizes.length];
-            stateService.setState('ui', { 
-                ...stateService.getState('ui'), 
-                fontSize: newSize 
+        const fontButton = document.getElementById('font-size');
+        if (fontButton) {
+            fontButton.addEventListener('click', () => {
+                const sizes = ['small', 'medium', 'large'];
+                const currentSize = document.body.dataset.fontSize || 'medium';
+                const currentIndex = sizes.indexOf(currentSize);
+                const newSize = sizes[(currentIndex + 1) % sizes.length];
+                document.body.dataset.fontSize = newSize;
             });
-        });
+        }
     }
 
-    handleUiStateChange(uiState) {
-        document.body.dataset.theme = uiState.theme;
-        document.body.dataset.fontSize = uiState.fontSize;
-        document.documentElement.lang = uiState.language;
-        
-        // Persist UI preferences
-        localStorage.setItem('theme', uiState.theme);
-        localStorage.setItem('fontSize', uiState.fontSize);
-        localStorage.setItem('language', uiState.language);
-    }
-
+    // Page rendering methods
     loadHomePage() {
-        return `
+        const mainContent = document.getElementById('main-content');
+        if (!mainContent) return;
+
+        mainContent.innerHTML = `
             <div class="home-page">
                 <h1>Welcome to Transcendence</h1>
                 <div class="menu-options">
                     <a href="/game" data-route="/game" class="menu-button">Play Game</a>
                     <a href="/chat" data-route="/chat" class="menu-button">Chat</a>
-                    <a href="/profile" data-route="/profile" class="menu-button">Profile</a>
                 </div>
             </div>
         `;
     }
 
-    loadGamePage() {
-        return `
-            <div id="game-container" class="page-container">
-                <h2>Game</h2>
-                <div class="game-area">
-                    <!-- Game canvas will be inserted here -->
-                </div>
-                <div class="game-controls">
-                    <button id="start-game">Start Game</button>
-                    <button id="pause-game">Pause</button>
-                </div>
-            </div>
-        `;
-    }
-
-    loadChatPage() {
-        return `
-            <div id="chat-container" class="page-container">
-                <h2>Chat</h2>
-                <div class="chat-area">
-                    <div class="chat-channels">
-                        <!-- Channels list -->
-                    </div>
-                    <div class="chat-messages">
-                        <!-- Messages area -->
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    loadProfilePage() {
-        return `
-            <div id="profile-container" class="page-container">
-                <h2>Profile</h2>
-                <div class="profile-content">
-                    <!-- Profile content -->
-                </div>
-            </div>
-        `;
-    }
-
-    load404Page() {
-        return `
-            <div class="error-page">
-                <h1>404 - Page Not Found</h1>
-                <a href="/" data-route="/" class="menu-button">Return Home</a>
-            </div>
-        `;
-    }
+    // ... (rest of your page loading methods)
 }
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
-    new App();
+    window.app = new App();
 });
+
+export default App;
