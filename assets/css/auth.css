@@ -1,102 +1,425 @@
-.login-page {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: calc(100vh - 200px);
-    padding: var(--spacing-xl);
+:root {
+    --neon-primary: #0ff;
+    --neon-secondary: #f0f;
+    --neon-tertiary: #ff0;
+    --surface-dark: rgba(13, 17, 23, 0.95);
+    --text-glow: 0 0 10px rgba(0, 255, 255, 0.5);
+    --cyber-gradient: linear-gradient(135deg, #0ff, #f0f);
+    --hologram-effect: repeating-linear-gradient(
+      transparent 2px,
+      rgba(0, 255, 255, 0.03) 4px,
+      transparent 6px
+    );
+  }
+  
+  /* Enhanced Background Animation */
+  .login-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--surface-dark);
+      position: relative;
+      overflow: hidden;
+      perspective: 1000px;
+  }
+  
+  .cyber-grid {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-image: 
+          linear-gradient(transparent 95%, rgba(0, 255, 255, 0.1) 95%),
+          linear-gradient(90deg, transparent 95%, rgba(0, 255, 255, 0.1) 95%);
+      background-size: 50px 50px;
+      animation: gridMove 20s linear infinite;
+      transform: perspective(500px) rotateX(60deg);
+      opacity: 0.2;
+  }
+  
+  @keyframes gridMove {
+      from { transform: perspective(500px) rotateX(60deg) translateY(0); }
+      to { transform: perspective(500px) rotateX(60deg) translateY(50px); }
+  }
+  
+  /* Holographic Container */
+  .login-container {
+      width: 100%;
+      max-width: 480px;
+      padding: 3rem;
+      background: rgba(13, 17, 23, 0.85);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(0, 255, 255, 0.1);
+      border-radius: 20px;
+      box-shadow: 
+          0 0 30px rgba(0, 255, 255, 0.1),
+          inset 0 0 20px rgba(0, 255, 255, 0.05);
+      position: relative;
+      overflow: hidden;
+      animation: containerPulse 4s ease-in-out infinite;
+      transform-style: preserve-3d;
+  }
+  
+  .login-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--hologram-effect);
+      pointer-events: none;
+      opacity: 0.5;
+      animation: holoLines 3s linear infinite;
+  }
+  
+  /* Enhanced Logo */
+  .logo-container {
+      text-align: center;
+      margin-bottom: 2.5rem;
+      position: relative;
+  }
+  
+  .logo-ping, .logo-pong {
+      font-family: 'BlenderPro', sans-serif;
+      font-size: 3.5rem;
+      font-weight: 900;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      background: var(--cyber-gradient);
+      -webkit-text-fill-color: transparent;
+      text-shadow: var(--text-glow);
+      position: relative;
+      z-index: 1;
+  }
+  
+  .logo-year {
+      font-size: 1.5rem;
+      color: var(--neon-primary);
+      font-weight: 700;
+      letter-spacing: 0.5em;
+      margin-top: 0.5rem;
+      text-shadow: var(--text-glow);
+      animation: yearPulse 2s ease-in-out infinite;
+  }
+  
+  /* Cyberpunk Buttons */
+  .login-button {
+      position: relative;
+      width: 100%;
+      padding: 1.2rem;
+      border: 2px solid var(--neon-primary);
+      background: transparent;
+      border-radius: 8px;
+      color: var(--neon-primary);
+      font-size: 1.2rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      cursor: pointer;
+      overflow: hidden;
+      transition: all 0.3s ease;
+  }
+  
+  .login-button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(0, 255, 255, 0.2),
+          transparent
+      );
+      transition: 0.5s;
+  }
+  
+  .login-button:hover::before {
+      left: 100%;
+  }
+  
+  .login-button:hover {
+      background: rgba(0, 255, 255, 0.1);
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+      transform: translateY(-2px);
+  }
+  
+  /* Glitch Effect */
+  @keyframes glitch {
+      0% { transform: translate(0); }
+      20% { transform: translate(-2px, 2px); }
+      40% { transform: translate(-2px, -2px); }
+      60% { transform: translate(2px, 2px); }
+      80% { transform: translate(2px, -2px); }
+      100% { transform: translate(0); }
+  }
+  
+  .button-content {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+  }
+  
+  .button-content:hover {
+      animation: glitch 0.5s ease-in-out infinite;
+  }
+  
+  /* Time Display */
+  .time-display {
+      position: fixed;
+      top: 2rem;
+      right: 2rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.2rem;
+      color: var(--neon-primary);
+      text-shadow: var(--text-glow);
+      padding: 1rem;
+      border: 1px solid rgba(0, 255, 255, 0.2);
+      border-radius: 8px;
+      background: rgba(13, 17, 23, 0.8);
+      backdrop-filter: blur(10px);
+  }
+  
+  /* Particle System */
+  .particle {
+      position: absolute;
+      background: var(--neon-primary);
+      width: 2px;
+      height: 2px;
+      border-radius: 50%;
+      filter: blur(1px);
+      animation: particleFloat 10s infinite linear;
+  }
+  
+  @keyframes particleFloat {
+      0% { transform: translate(0, 0) rotate(0deg); }
+      100% { transform: translate(400px, -400px) rotate(360deg); }
+  }
+  
+  /* Loading Animation */
+  .spinner {
+      width: 30px;
+      height: 30px;
+      border: 3px solid transparent;
+      border-top-color: var(--neon-primary);
+      border-radius: 50%;
+      animation: spinnerRotate 1s linear infinite;
+  }
+  
+  .spinner::before,
+  .spinner::after {
+      content: '';
+      position: absolute;
+      border: 3px solid transparent;
+      border-radius: 50%;
+  }
+  
+  .spinner::before {
+      top: -3px;
+      left: -3px;
+      right: -3px;
+      bottom: -3px;
+      border-top-color: var(--neon-secondary);
+      animation: spinnerRotate 2s linear infinite;
+  }
+  
+  .spinner::after {
+      top: 3px;
+      left: 3px;
+      right: 3px;
+      bottom: 3px;
+      border-top-color: var(--neon-tertiary);
+      animation: spinnerRotate 3s linear infinite;
+  }
+  
+  @keyframes spinnerRotate {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+  }
+  
+  /* Error Message */
+  .login-error {
+      background: rgba(255, 0, 0, 0.1);
+      border: 1px solid rgba(255, 0, 0, 0.3);
+      padding: 1rem;
+      border-radius: 8px;
+      color: #ff4444;
+      text-shadow: 0 0 10px rgba(255, 0, 0, 0.3);
+      animation: errorPulse 2s infinite;
+  }
+  
+  @keyframes errorPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.8; }
+  }
+  
+  /* Footer */
+  .login-footer {
+      margin-top: 3rem;
+      text-align: center;
+      color: rgba(0, 255, 255, 0.7);
+      font-size: 0.9rem;
+      letter-spacing: 0.1em;
+  }
+  
+  .version-info {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--neon-primary);
+      text-shadow: var(--text-glow);
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+      .login-container {
+          margin: 1rem;
+          padding: 2rem;
+      }
+  
+      .logo-ping, .logo-pong {
+          font-size: 2.5rem;
+      }
+  
+      .logo-year {
+          font-size: 1.2rem;
+      }
+  }
+  
+  /* Animations */
+  @keyframes containerPulse {
+      0%, 100% { box-shadow: 0 0 30px rgba(0, 255, 255, 0.1); }
+      50% { box-shadow: 0 0 50px rgba(0, 255, 255, 0.2); }
+  }
+  
+  @keyframes holoLines {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(-10px); }
+  }
+  
+  @keyframes yearPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+  }
+
+
+  /* Fix vendor prefix issues and enhance time display */
+
+/* Time Display */
+.time-display {
+    position: fixed;
+    top: 2rem;
+    right: 2rem;
+    padding: 1.5rem;
+    background: rgba(13, 17, 23, 0.85);
+    border: 1px solid var(--neon-primary);
+    border-radius: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    
+    /* Add all vendor prefixes for backdrop-filter */
+    -webkit-backdrop-filter: blur(10px);
+    -moz-backdrop-filter: blur(10px);
+    -ms-backdrop-filter: blur(10px);
+    -o-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    
+    z-index: 1000;
+    animation: timeDisplayPulse 2s infinite ease-in-out;
 }
 
-.login-container {
-    background: var(--surface-color);
-    padding: var(--spacing-xl);
-    border-radius: var(--border-radius-lg);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+/* Enhanced time components */
+.time-date {
+    font-size: 1.2rem;
+    color: var(--neon-primary);
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.1em;
+}
+
+.time-clock {
+    font-size: 1.8rem;
+    color: var(--neon-secondary);
+    font-weight: bold;
+    letter-spacing: 0.1em;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.time-utc {
+    font-size: 0.8rem;
+    color: var(--neon-tertiary);
+    opacity: 0.8;
+}
+
+.time-user {
+    margin-top: 1rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(0, 255, 255, 0.2);
+    font-size: 0.9rem;
+    color: var(--text-secondary);
     text-align: center;
-    max-width: 400px;
-    width: 100%;
 }
 
-.login-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--spacing-md);
-    width: 100%;
-    padding: var(--spacing-md);
-    margin-top: var(--spacing-lg);
-    background: var(--primary-color);
-    color: white;
-    border: none;
-    border-radius: var(--border-radius-md);
-    font-size: 1.1rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all var(--transition-speed);
+/* Fix vendor prefix issues for text gradients */
+.logo-ping, 
+.logo-pong,
+.cyber-text {
+    background: var(--cyber-gradient);
+    -webkit-background-clip: text;
+    -moz-background-clip: text;
+    -ms-background-clip: text;
+    -o-background-clip: text;
+    background-clip: text;
+    
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    -moz-text-fill-color: transparent;
 }
 
-.login-button:hover:not(:disabled) {
-    background: var(--secondary-color);
-    transform: translateY(-2px);
+/* Add time display animation */
+@keyframes timeDisplayPulse {
+    0%, 100% {
+        border-color: var(--neon-primary);
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+    }
+    50% {
+        border-color: var(--neon-secondary);
+        box-shadow: 0 0 30px rgba(255, 0, 255, 0.2);
+    }
 }
 
-.login-button:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
+/* Add vendor prefixes for the animation */
+@-webkit-keyframes timeDisplayPulse {
+    0%, 100% {
+        border-color: var(--neon-primary);
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+    }
+    50% {
+        border-color: var(--neon-secondary);
+        box-shadow: 0 0 30px rgba(255, 0, 255, 0.2);
+    }
 }
 
-.login-icon {
-    width: 24px;
-    height: 24px;
+@-moz-keyframes timeDisplayPulse {
+    0%, 100% {
+        border-color: var(--neon-primary);
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+    }
+    50% {
+        border-color: var(--neon-secondary);
+        box-shadow: 0 0 30px rgba(255, 0, 255, 0.2);
+    }
 }
 
-.login-error {
-    margin-top: var(--spacing-md);
-    padding: var(--spacing-sm) var(--spacing-md);
-    color: var(--error-color);
-    background: rgba(239, 68, 68, 0.1);
-    border-radius: var(--border-radius-sm);
-    font-size: 0.9rem;
-}
-
-/* ... existing styles ... */
-
-/* Development Mode Styles */
-.dev-login {
-    margin-top: var(--spacing-xl);
-    padding-top: var(--spacing-lg);
-}
-
-.divider {
-    border: none;
-    border-top: 1px solid var(--border-color);
-    margin: var(--spacing-lg) 0;
-}
-
-.dev-note {
-    color: var(--warning-color);
-    font-size: 0.9rem;
-    margin: var(--spacing-md) 0;
-    padding: var(--spacing-sm);
-    background: rgba(245, 158, 11, 0.1);
-    border-radius: var(--border-radius-sm);
-}
-
-.login-button.mock {
-    background-color: var(--surface-color);
-    color: var(--text-primary);
-    border: 2px solid var(--border-color);
-}
-
-.login-button.mock:hover {
-    background-color: var(--border-color);
-}
-
-/* Error Message */
-.login-error {
-    margin-top: var(--spacing-md);
-    padding: var(--spacing-sm) var(--spacing-md);
-    color: var(--error-color);
-    background: rgba(239, 68, 68, 0.1);
-    border-radius: var(--border-radius-sm);
-    font-size: 0.9rem;
+/* Fix for backdrop-filter cross-browser support */
+@supports not (backdrop-filter: blur(10px)) {
+    .time-display,
+    .login-container {
+        background: rgba(13, 17, 23, 0.95);
+    }
 }

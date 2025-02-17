@@ -3,9 +3,10 @@ export const API_CONFIG = {
     // We'll add a flag to indicate if we're using mock data
     USE_MOCK: true,
     
-    // This will be changed when backend is ready
+    // Base URL for API calls
     BASE_URL: 'http://localhost:3000',
     
+    // API endpoints
     AUTH: {
         LOGIN: '/api/auth/42/login',
         CALLBACK: '/api/auth/42/callback',
@@ -22,6 +23,8 @@ export const API_CONFIG = {
             status: 'online'
         }
     },
+
+
     // WebSocket endpoints (these match the ones used in your App.js)
     WEBSOCKET_GAME: 'ws://localhost:3000/game',
     WEBSOCKET_CHAT: 'ws://localhost:3000/chat',
@@ -60,4 +63,4 @@ export const APP_SETTINGS = {
         LIGHT: 'light',
         HIGH_CONTRAST: 'high-contrast'
     }
-};s
+};

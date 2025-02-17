@@ -3,12 +3,23 @@ import { API_CONFIG } from './config/api.js';
 import { RouterService } from './services/RouterService.js';
 import { stateService } from './services/StateService.js';
 
+console.log('App.js loaded');
+
+
 class App {
+
+    
     constructor() {
-        this.initializeAuthState();
-        this.router = new RouterService();
-        this.initializeRouter();
-        this.setupEventListeners();
+        console.log('App initializing...');
+        try {
+            this.initializeAuthState();
+            this.router = new RouterService();
+            this.initializeRouter();
+            this.setupEventListeners();
+            console.log('App initialized successfully');
+        } catch (error) {
+            console.error('App initialization failed:', error);
+        }
     }
 
     initializeAuthState() {
