@@ -2,6 +2,7 @@ import { LoginPage } from './components/auth/LoginPage.js';
 import { API_CONFIG } from './config/api.js';
 import { RouterService } from './services/RouterService.js';
 import { stateService } from './services/StateService.js';
+import { LandingPage } from './components/LandingPage.js';
 
 console.log('App.js loaded');
 
@@ -39,12 +40,22 @@ class App {
                 user: null,
                 loading: false
             });
+            // Hide navigation for non-authenticated users
+            this.toggleNavigation(false);
         }
     }
 
+
     initializeRouter() {
-        // Add routes
-        this.router.addRoute('/', () => this.loadHomePage());
+        // Update routes to handle landing page
+        this.router.addRoute('/', () => {
+            const authState = stateService.getState('auth');
+            if (!authState.isAuthenticated) {
+                return new LandingPage();
+            }
+            return this.loadHomePage();
+        });
+        
         this.router.addRoute('/login', () => new LoginPage());
         this.router.addRoute('/game', () => this.loadGamePage(), true);
         this.router.addRoute('/chat', () => this.loadChatPage(), true);
@@ -55,6 +66,8 @@ class App {
         const path = window.location.pathname;
         this.router.navigateTo(path, false);
     }
+
+
 
     async checkAuthStatus(token) {
         try {
@@ -71,6 +84,8 @@ class App {
                     user: data.user,
                     loading: false
                 });
+                // Show navigation for authenticated users
+                this.toggleNavigation(true);
             } else {
                 this.handleLogout();
             }
@@ -87,7 +102,15 @@ class App {
             user: null,
             loading: false
         });
-        this.router.navigateTo('/login');
+        this.toggleNavigation(false);
+        this.router.navigateTo('/');
+    }
+
+    toggleNavigation(show) {
+        const nav = document.getElementById('main-nav');
+        if (nav) {
+            nav.style.display = show ? 'block' : 'none';
+        }
     }
 
     setupEventListeners() {
@@ -112,21 +135,51 @@ class App {
         }
     }
 
-    // Page rendering methods
     loadHomePage() {
         const mainContent = document.getElementById('main-content');
         if (!mainContent) return;
 
+        const authState = stateService.getState('auth');
+        const user = authState.user || { login: 'Sdiabate1337' };
+
         mainContent.innerHTML = `
-            <div class="home-page">
-                <h1>Welcome to Transcendence</h1>
-                <div class="menu-options">
-                    <a href="/game" data-route="/game" class="menu-button">Play Game</a>
-                    <a href="/chat" data-route="/chat" class="menu-button">Chat</a>
-                </div>
+            <div class="home-page authenticated">
+                <aside class="sidebar">
+                    <div class="user-profile">
+                        <div class="user-avatar">
+                            <img src="${user.avatar || 'assets/images/default-avatar.png'}" alt="Profile">
+                        </div>
+                        <h3 class="user-name">${user.login}</h3>
+                    </div>
+                    <nav class="sidebar-nav">
+                        <a href="/profile" data-route="/profile" class="nav-item">
+                            <span class="nav-icon">👤</span>
+                            Profile
+                        </a>
+                        <a href="/game" data-route="/game" class="nav-item">
+                            <span class="nav-icon">🎮</span>
+                            Game
+                        </a>
+                        <a href="/chat" data-route="/chat" class="nav-item">
+                            <span class="nav-icon">💬</span>
+                            Chat
+                        </a>
+                        <a href="/settings" data-route="/settings" class="nav-item">
+                            <span class="nav-icon">⚙️</span>
+                            Settings
+                        </a>
+                    </nav>
+                </aside>
+                <main class="main-content">
+                    <h1>Welcome back, ${user.login}!</h1>
+                    <div class="quick-stats">
+                        <!-- Add your stats here -->
+                    </div>
+                </main>
             </div>
         `;
     }
+
 
     // ... (rest of your page loading methods)
 }
