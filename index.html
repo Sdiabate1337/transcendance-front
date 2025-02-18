@@ -7,53 +7,92 @@
     <!-- Security Headers -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;">
     <meta name="referrer" content="strict-origin-when-cross-origin">
+    
+    <!-- SEO and Theme -->
+    <meta name="description" content="Experience the ultimate Pong game with FT_Transcendence - A modern take on the classic game">
+    <meta name="theme-color" content="#0d1117">
+    <meta name="application-name" content="FT_Transcendence">
 
-    <title>Transcendence - Test Mode</title>
+    <title>Pong Masters</title>
     
     <!-- Preload critical assets -->
     <link rel="preload" href="assets/css/main.css" as="style">
     <link rel="preload" href="assets/css/auth.css" as="style">
+    <link rel="preload" href="assets/css/landing.css" as="style">
     <link rel="preload" href="src/app.js" as="script" crossorigin="anonymous">
-
-    <!-- Styles -->
-    <link rel="stylesheet" href="assets/css/main.css">
-    <link rel="stylesheet" href="assets/css/auth.css">
-    <link rel="stylesheet" href="assets/css/components.css">
-    <link rel="stylesheet" href="assets/css/animations.css">
-    <!-- Add this in the head section -->
-    <link rel="stylesheet" href="assets/css/home.css">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
     
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles/reset.css">
+    <link rel="stylesheet" href="styles/landing.css">
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="assets/css/auth.css">
+    <link rel="stylesheet" href="assets/css/components.css">
+    <link rel="stylesheet" href="assets/css/animations.css">
+    <link rel="stylesheet" href="assets/css/landing.css">
+    <link rel="stylesheet" href="assets/css/about.css">
+    <link rel="stylesheet" href="assets/css/home.css">
+
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="assets/images/favicon.ico">
 </head>
 <body>
     <div id="app">
-        <!-- Navigation -->
-        <nav id="main-nav" aria-label="Main navigation">
+        <!-- Navigation (Hidden by default for non-authenticated users) -->
+        <nav id="main-nav" aria-label="Main navigation" style="display: none;">
             <div class="nav-content">
+                <!-- Left Navigation -->
                 <div class="nav-left">
-                    <a href="/" data-route="/" class="logo" aria-label="Home">Transcendence</a>
+                    <a href="/" data-route="/" class="logo" aria-label="Home">
+                        <span class="logo-ft">FT_</span>
+                        <span class="logo-text">TRANSCENDENCE</span>
+                    </a>
                     <div class="nav-links" role="navigation">
-                        <a href="/game" data-route="/game" class="nav-link" aria-label="Play Game">Game</a>
-                        <a href="/chat" data-route="/chat" class="nav-link" aria-label="Open Chat">Chat</a>
+                        <a href="/game" data-route="/game" class="nav-link" aria-label="Play Game">
+                            <span class="nav-icon">🎮</span>
+                            Game
+                        </a>
+                        <a href="/chat" data-route="/chat" class="nav-link" aria-label="Open Chat">
+                            <span class="nav-icon">💬</span>
+                            Chat
+                        </a>
+                        <a href="/profile" data-route="/profile" class="nav-link" aria-label="View Profile">
+                            <span class="nav-icon">👤</span>
+                            Profile
+                        </a>
                     </div>
                 </div>
+
+                <!-- Right Navigation -->
                 <div class="nav-right">
+                    <!-- Current Time -->
+                    <div class="current-time" aria-label="Current UTC time">
+                        2025-02-17 13:17:04
+                    </div>
+
+                    <!-- UI Controls -->
                     <div class="ui-controls" role="group" aria-label="UI Controls">
                         <button id="high-contrast" class="ui-button" aria-label="Toggle theme">
+                            <span class="button-icon">🌓</span>
                             <span class="button-text">Theme</span>
                         </button>
                         <button id="font-size" class="ui-button" aria-label="Adjust font size">
+                            <span class="button-icon">Aa</span>
                             <span class="button-text">Font</span>
                         </button>
                     </div>
-                    <div id="auth-nav">
-                        <a href="/login" data-route="/login" class="nav-link">Login</a>
+
+                    <!-- User Menu -->
+                    <div class="user-menu">
+                        <button class="user-button" aria-label="User menu">
+                            <img src="assets/images/default-avatar.png" alt="" class="user-avatar">
+                            <span class="user-name">Sdiabate1337</span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -62,28 +101,43 @@
         <!-- Main Content -->
         <main id="main-content" role="main" aria-live="polite"></main>
 
-        <!-- Loading Overlay -->
+        <!-- System Overlays -->
         <div id="loading-overlay" class="loading-overlay" style="display: none;">
             <div class="loading-spinner"></div>
+            <div class="loading-text">Loading...</div>
         </div>
 
         <!-- Toast Notifications -->
         <div id="toast-container" class="toast-container" aria-live="polite"></div>
 
-        <!-- Debug Panel -->
+        <!-- Debug Panel (Hidden in production) -->
         <div class="debug-panel" role="complementary" aria-label="Debug information">
+            <div class="debug-header">Debug Information</div>
             <div id="current-route" aria-label="Current route">Current Route: /</div>
             <div id="current-state" aria-label="Current state">Current State: {}</div>
             <div id="websocket-status" aria-label="WebSocket status">WebSocket: Disconnected</div>
+            <div id="current-time" aria-label="Current time">Time: 2025-02-17 13:17:04</div>
         </div>
+
+        <!-- Modal Container -->
+        <div id="modal-container" class="modal-container" style="display: none;"></div>
     </div>
 
     <!-- Error Boundary -->
     <div id="error-boundary" class="error-boundary" style="display: none;">
         <div class="error-content">
+            <div class="error-icon">⚠️</div>
             <h2>Oops! Something went wrong</h2>
             <p id="error-message"></p>
-            <button onclick="window.location.reload()">Reload Page</button>
+            <div class="error-actions">
+                <button onclick="window.location.reload()" class="primary-button">
+                    <span class="button-icon">🔄</span>
+                    Reload Page
+                </button>
+                <button onclick="window.app.reportError()" class="secondary-button">
+                    Report Issue
+                </button>
+            </div>
         </div>
     </div>
 
@@ -93,8 +147,10 @@
     <!-- Fallback for JavaScript disabled -->
     <noscript>
         <div class="noscript-message">
+            <div class="noscript-icon">⚠️</div>
             <h2>JavaScript Required</h2>
-            <p>Please enable JavaScript to use this application.</p>
+            <p>Please enable JavaScript to experience FT_Transcendence.</p>
+            <p>This application requires JavaScript for real-time gaming and interactive features.</p>
         </div>
     </noscript>
 </body>

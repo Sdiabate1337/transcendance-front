@@ -1,101 +1,91 @@
 export class RouterService {
-    constructor() {
-        this.routes = new Map();
-        this.currentRoute = null;
-        
-        // Handle browser back/forward buttons
-        window.addEventListener('popstate', () => {
-            this.handleRoute(window.location.pathname, false);
+    constructor(app) {
+        this.app = app;
+        this.routes = {
+            '/': () => this.showLandingPage(),
+            '/login': () => this.showLoginPage(),
+            '/home': () => this.showHomePage(),
+            '/about': () => this.showAboutPage()
+        };
+
+        this.protectedRoutes = ['/home'];
+        this.initializeRouter();
+    }
+
+    initializeRouter() {
+        window.addEventListener('popstate', () => this.handleRoute());
+        document.addEventListener('click', (e) => {
+            if (e.target.matches('[data-route]')) {
+                e.preventDefault();
+                this.navigateTo(e.target.getAttribute('data-route'));
+            }
         });
     }
 
-    addRoute(path, component, requiresAuth = false) {
-        this.routes.set(path, { component, requiresAuth });
+    navigateTo(route) {
+        window.history.pushState(null, null, route);
+        this.handleRoute();
     }
 
-    navigateTo(path, addToHistory = true) {
-        if (addToHistory) {
-            window.history.pushState({ path }, '', path);
-        }
-        this.handleRoute(path);
-    }
-
-    handleRoute(path) {
-        // Update debug panel
-        const debugRoute = document.getElementById('current-route');
-        if (debugRoute) {
-            debugRoute.textContent = `Current Route: ${path}`;
-        }
-
-        // Get route configuration
-        const route = this.routes.get(path) || this.routes.get('/404');
-        if (!route) {
-            this.navigateTo('/404');
-            return;
-        }
-
-        // Check auth for protected routes
-        if (route.requiresAuth) {
-            const authState = window.app.getAuthState();
-            if (!authState.isAuthenticated) {
-                // Store attempted path
-                localStorage.setItem('auth_redirect', path);
-                this.navigateTo('/login');
+    handleRoute() {
+        const path = window.location.pathname;
+        
+        // Check if route is protected
+        if (this.protectedRoutes.includes(path)) {
+            if (!this.app.stateService.isAuthenticated()) {
+                console.log('Access denied: Authentication required');
+                this.navigateTo('/');
                 return;
             }
         }
 
-        const mainContent = document.getElementById('main-content');
-        if (!mainContent) return;
+        const route = this.routes[path] || this.routes['/'];
+        route();
+    }
 
-        try {
-            // Show loading state
-            this.showLoading();
-
-            // Execute component
-            if (typeof route.component === 'function') {
-                route.component();
+    showLandingPage() {
+        // If user is authenticated, redirect to home
+        if (this.app.stateService.isAuthenticated()) {
+            this.navigateTo('/home');
+            return;
+        }
+        
+        import('../components/LandingPage.js').then(module => {
+            const landingPage = new module.LandingPage(this.app);
+            this.app.setCurrentPage(landingPage);
+            
+            // Hide debug panel when showing landing page
+            const debugPanel = document.getElementById('debug-panel');
+            if (debugPanel) {
+                debugPanel.style.display = 'none';
             }
-
-            // Update current route
-            this.currentRoute = path;
-
-            // Scroll to top
-            window.scrollTo(0, 0);
-        } catch (error) {
-            console.error('Error rendering route:', error);
-            this.showError('Failed to load page');
-            this.navigateTo('/404');
-        } finally {
-            // Hide loading state
-            this.hideLoading();
-        }
+        });
     }
 
-    showLoading() {
-        const overlay = document.getElementById('loading-overlay');
-        if (overlay) {
-            overlay.style.display = 'flex';
+    showLoginPage() {
+        // If user is authenticated, redirect to home
+        if (this.app.stateService.isAuthenticated()) {
+            this.navigateTo('/home');
+            return;
         }
+
+        import('../components/LoginPage.js').then(module => {
+            const loginPage = new module.LoginPage(this.app);
+            this.app.setCurrentPage(loginPage);
+        });
     }
 
-    hideLoading() {
-        const overlay = document.getElementById('loading-overlay');
-        if (overlay) {
-            overlay.style.display = 'none';
-        }
+    showHomePage() {
+        import('../components/HomePage.js').then(module => {
+            const homePage = new module.HomePage(this.app);
+            this.app.setCurrentPage(homePage);
+        });
     }
 
-    showError(message) {
-        const errorBoundary = document.getElementById('error-boundary');
-        const errorMessage = document.getElementById('error-message');
-        if (errorBoundary && errorMessage) {
-            errorMessage.textContent = message;
-            errorBoundary.style.display = 'flex';
-        }
-    }
-
-    getCurrentRoute() {
-        return this.currentRoute;
+    showAboutPage() {
+        import('../components/AboutPage.js').then(module => {
+            const aboutPage = new module.AboutPage(this.app);
+            this.app.setCurrentPage(aboutPage);
+        });
     }
 }

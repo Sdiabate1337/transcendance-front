@@ -1,192 +1,137 @@
 import { LoginPage } from './components/auth/LoginPage.js';
 import { API_CONFIG } from './config/api.js';
 import { RouterService } from './services/RouterService.js';
-import { stateService } from './services/StateService.js';
+import { StateService } from './services/StateService.js';
 import { LandingPage } from './components/LandingPage.js';
+import { HomePage } from './components/HomePage.js';
+import AboutPage from './components/AboutPage.js';
 
-console.log('App.js loaded');
-
-
-class App {
-
-    
+export class App {
     constructor() {
-        console.log('App initializing...');
-        try {
-            this.initializeAuthState();
-            this.router = new RouterService();
-            this.initializeRouter();
-            this.setupEventListeners();
-            console.log('App initialized successfully');
-        } catch (error) {
-            console.error('App initialization failed:', error);
-        }
-    }
-
-    initializeAuthState() {
-        stateService.setState('auth', {
-            isAuthenticated: false,
-            user: null,
-            loading: true
-        });
-
-        // Check for stored auth token
-        const token = localStorage.getItem('auth_token');
-        if (token) {
-            this.checkAuthStatus(token);
-        } else {
-            stateService.setState('auth', {
-                isAuthenticated: false,
-                user: null,
-                loading: false
-            });
-            // Hide navigation for non-authenticated users
-            this.toggleNavigation(false);
-        }
-    }
-
-
-    initializeRouter() {
-        // Update routes to handle landing page
-        this.router.addRoute('/', () => {
-            const authState = stateService.getState('auth');
-            if (!authState.isAuthenticated) {
-                return new LandingPage();
-            }
-            return this.loadHomePage();
-        });
+        this.stateService = new StateService();
+        this.routerService = new RouterService(this);
+        this.currentPage = null;
+        this.appContainer = document.getElementById('app');
         
-        this.router.addRoute('/login', () => new LoginPage());
-        this.router.addRoute('/game', () => this.loadGamePage(), true);
-        this.router.addRoute('/chat', () => this.loadChatPage(), true);
-        this.router.addRoute('/profile', () => this.loadProfilePage(), true);
-        this.router.addRoute('/404', () => this.load404Page());
-
-        // Handle initial route
-        const path = window.location.pathname;
-        this.router.navigateTo(path, false);
+        this.initialize();
     }
 
+    async initialize() {
+        // Handle 42 OAuth callback
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        
+        if (code) {
+            await this.handle42Callback(code);
+        } else {
+            this.routerService.handleRoute();
+        }
 
+        // Initialize error boundary
+        window.onerror = (message, source, lineno, colno, error) => {
+            console.error('Global error:', { message, source, lineno, colno, error });
+            this.handleError(error);
+        };
 
-    async checkAuthStatus(token) {
+        // Listen for state changes
+        this.stateService.subscribe(() => {
+            this.updateUI();
+        });
+    }
+
+    async handle42Callback(code) {
         try {
-            const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.AUTH.CHECK}`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                stateService.setState('auth', {
-                    isAuthenticated: true,
-                    user: data.user,
-                    loading: false
-                });
-                // Show navigation for authenticated users
-                this.toggleNavigation(true);
+            const success = await this.stateService.login42(code);
+            if (success) {
+                // Clear the URL parameters
+                window.history.replaceState({}, document.title, '/');
+                this.routerService.navigateTo('/home');
             } else {
-                this.handleLogout();
+                this.routerService.navigateTo('/');
             }
         } catch (error) {
-            console.error('Auth check failed:', error);
-            this.handleLogout();
+            this.handleError(error);
+            this.routerService.navigateTo('/');
         }
     }
 
-    handleLogout() {
-        localStorage.removeItem('auth_token');
-        stateService.setState('auth', {
-            isAuthenticated: false,
-            user: null,
-            loading: false
-        });
-        this.toggleNavigation(false);
-        this.router.navigateTo('/');
+    setCurrentPage(page) {
+        if (this.currentPage && this.currentPage.destroy) {
+            this.currentPage.destroy();
+        }
+
+        // Clear the app container
+        if (this.appContainer) {
+            this.appContainer.innerHTML = '';
+        }
+
+        this.currentPage = page;
+        
+        // Render the new page
+        if (this.currentPage && this.currentPage.render) {
+            const content = this.currentPage.render();
+            if (content && this.appContainer) {
+                if (typeof content === 'string') {
+                    this.appContainer.innerHTML = content;
+                } else if (content instanceof HTMLElement) {
+                    this.appContainer.appendChild(content);
+                }
+            }
+        }
+
+        // Initialize the new page
+        if (this.currentPage && this.currentPage.initialize) {
+            this.currentPage.initialize();
+        }
+
+        // Hide debug panel by default
+        this.hideDebugPanel();
     }
 
-    toggleNavigation(show) {
-        const nav = document.getElementById('main-nav');
-        if (nav) {
-            nav.style.display = show ? 'block' : 'none';
+    handleError(error) {
+        console.error('Application error:', error);
+        this.showDebugPanel();
+    }
+
+    showDebugPanel() {
+        const debugPanel = document.getElementById('debug-panel');
+        if (debugPanel) {
+            const route = document.getElementById('debug-route');
+            const state = document.getElementById('debug-state');
+            const websocket = document.getElementById('debug-websocket');
+            const time = document.getElementById('debug-time');
+
+            route.textContent = window.location.pathname;
+            state.textContent = JSON.stringify(this.stateService.getState());
+            websocket.textContent = 'Disconnected';
+            time.textContent = new Date().toISOString();
+
+            debugPanel.style.display = 'block';
         }
     }
 
-    setupEventListeners() {
-        // Handle theme toggle
-        const themeButton = document.getElementById('high-contrast');
-        if (themeButton) {
-            themeButton.addEventListener('click', () => {
-                document.body.classList.toggle('high-contrast');
-            });
-        }
-
-        // Handle font size changes
-        const fontButton = document.getElementById('font-size');
-        if (fontButton) {
-            fontButton.addEventListener('click', () => {
-                const sizes = ['small', 'medium', 'large'];
-                const currentSize = document.body.dataset.fontSize || 'medium';
-                const currentIndex = sizes.indexOf(currentSize);
-                const newSize = sizes[(currentIndex + 1) % sizes.length];
-                document.body.dataset.fontSize = newSize;
-            });
+    hideDebugPanel() {
+        const debugPanel = document.getElementById('debug-panel');
+        if (debugPanel) {
+            debugPanel.style.display = 'none';
         }
     }
 
-    loadHomePage() {
-        const mainContent = document.getElementById('main-content');
-        if (!mainContent) return;
+    updateUI() {
+        // Update navigation visibility based on auth state
+        const mainNav = document.getElementById('main-nav');
+        if (mainNav) {
+            mainNav.style.display = this.stateService.isAuthenticated() ? 'block' : 'none';
+        }
 
-        const authState = stateService.getState('auth');
-        const user = authState.user || { login: 'Sdiabate1337' };
-
-        mainContent.innerHTML = `
-            <div class="home-page authenticated">
-                <aside class="sidebar">
-                    <div class="user-profile">
-                        <div class="user-avatar">
-                            <img src="${user.avatar || 'assets/images/default-avatar.png'}" alt="Profile">
-                        </div>
-                        <h3 class="user-name">${user.login}</h3>
-                    </div>
-                    <nav class="sidebar-nav">
-                        <a href="/profile" data-route="/profile" class="nav-item">
-                            <span class="nav-icon">👤</span>
-                            Profile
-                        </a>
-                        <a href="/game" data-route="/game" class="nav-item">
-                            <span class="nav-icon">🎮</span>
-                            Game
-                        </a>
-                        <a href="/chat" data-route="/chat" class="nav-item">
-                            <span class="nav-icon">💬</span>
-                            Chat
-                        </a>
-                        <a href="/settings" data-route="/settings" class="nav-item">
-                            <span class="nav-icon">⚙️</span>
-                            Settings
-                        </a>
-                    </nav>
-                </aside>
-                <main class="main-content">
-                    <h1>Welcome back, ${user.login}!</h1>
-                    <div class="quick-stats">
-                        <!-- Add your stats here -->
-                    </div>
-                </main>
-            </div>
-        `;
+        // Update current page if needed
+        if (this.currentPage && this.currentPage.update) {
+            this.currentPage.update(this.stateService.getState());
+        }
     }
-
-
-    // ... (rest of your page loading methods)
 }
 
 // Initialize the application
-document.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', () => {
     window.app = new App();
 });
-
-export default App;
