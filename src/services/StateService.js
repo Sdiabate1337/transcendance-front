@@ -205,18 +205,67 @@ export class StateService {
         }
     }
 
-    logout() {
-        // Clear user data
-        this.state.auth.user = null;
-        this.state.auth.isAuthenticated = false;
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('mock_user');
-        
-        // Redirect to landing page
-        window.app.routerService.navigateTo('/');
-        
-        // Notify subscribers about the state change
-        this.notify();
+    async logout() {
+        try {
+            console.log('Starting logout process');
+            
+            const token = this.state.auth.token;
+            const isAuthenticated = this.state.auth.isAuthenticated;
+            
+            if (!isAuthenticated) {
+                console.log('User already logged out');
+                return true;
+            }
+            
+            // Handle mock user logout in development mode
+            if (this.isDevelopment) {
+                console.log('Development mode: Clearing mock user data');
+                localStorage.removeItem('mock_user');
+            } 
+            // Handle 42 user logout in production
+            else if (token) {
+                console.log('Production mode: Calling logout API');
+                try {
+                    const response = await fetch('/api/auth/logout', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`Logout API failed with status: ${response.status}`);
+                    }
+                    
+                    console.log('Logout API call successful');
+                } catch (error) {
+                    console.error('Error calling logout API:', error);
+                    throw error; // Propagate error to be handled by HomePage
+                }
+            }
+
+            // Clear authentication state
+            this.state.auth = {
+                isAuthenticated: false,
+                token: null,
+                user: null
+            };
+
+            // Clear all auth-related localStorage items
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('user_preferences');
+            localStorage.removeItem('game_settings');
+            
+            // Notify all listeners of state change
+            this.notify();
+            
+            console.log('Logout completed successfully');
+            return true;
+        } catch (error) {
+            console.error('Logout error:', error);
+            throw error; // Propagate error to be handled by HomePage
+        }
     }
 
     // UI methods

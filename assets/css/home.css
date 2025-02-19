@@ -597,3 +597,141 @@ html, body {
         padding: 0.5rem;
     }
 }
+
+/* Notifications and Loading Indicator */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 25px;
+    border-radius: 8px;
+    color: white;
+    font-weight: 500;
+    z-index: 1000;
+    animation: slideIn 0.3s ease-out;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(8px);
+}
+
+.notification.success {
+    background: rgba(46, 213, 115, 0.95);
+    border-left: 4px solid #2ed573;
+}
+
+.notification.error {
+    background: rgba(255, 71, 87, 0.95);
+    border-left: 4px solid #ff4757;
+}
+
+.notification.info {
+    background: rgba(54, 162, 235, 0.95);
+    border-left: 4px solid #36a2eb;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+    backdrop-filter: blur(5px);
+}
+
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 3px solid var(--neon-primary);
+    border-radius: 50%;
+    border-top-color: transparent;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    background: var(--bg-darker);
+    border: 1px solid var(--neon-primary);
+    border-radius: 12px;
+    padding: 25px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 0 20px rgba(243, 156, 18, 0.2);
+}
+
+.modal-title {
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.modal-message {
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.modal-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.modal-button {
+    padding: 10px 20px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.modal-button.confirm {
+    background: var(--neon-primary);
+    color: var(--bg-darker);
+}
+
+.modal-button.cancel {
+    background: transparent;
+    border: 1px solid var(--neon-primary);
+    color: var(--neon-primary);
+}
+
+.modal-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(243, 156, 18, 0.2);
+}

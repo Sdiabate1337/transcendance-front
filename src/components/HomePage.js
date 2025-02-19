@@ -4,11 +4,26 @@ export class HomePage {
     constructor(app) {
         this.app = app;
         this.currentContent = 'profile'; // Default view
+        console.log('HomePage constructor called');
         this.render();
-        this.attachEventListeners();
+        
+        // Ensure event listeners are attached after a small delay
+        setTimeout(() => {
+            this.attachEventListeners();
+        }, 0);
+        
+        // Add state change listener
+        this.app.stateService.subscribe(() => {
+            this.render();
+            this.attachEventListeners();
+        });
     }
 
     render() {
+        console.log('HomePage render called');
+        // First, remove old event listeners if elements exist
+        this.removeEventListeners();
+        
         const template = `
             <div class="home-container">
                 <!-- Sidebar -->
@@ -46,7 +61,7 @@ export class HomePage {
 
                     <!-- Logout Button -->
                     <div class="sidebar-bottom">
-                        <button class="nav-item logout-btn" id="logout-btn">
+                        <button class="nav-item" id="logout-btn" type="button">
                             <i class="nav-icon">🚪</i>
                             <span>Logout</span>
                         </button>
@@ -63,6 +78,20 @@ export class HomePage {
         `;
 
         document.querySelector('#app').innerHTML = template;
+    }
+
+    removeEventListeners() {
+        // Remove navigation listeners
+        const navItems = document.querySelectorAll('.nav-item[data-view]');
+        navItems.forEach(item => {
+            item.replaceWith(item.cloneNode(true));
+        });
+
+        // Remove logout listener
+        const logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) {
+            logoutBtn.replaceWith(logoutBtn.cloneNode(true));
+        }
     }
 
     getContentTemplate() {
@@ -203,24 +232,123 @@ export class HomePage {
         `;
     }
 
+    showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.textContent = message;
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            notification.style.animation = 'slideIn 0.3s ease-out reverse';
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
+
+    showLoading() {
+        const loading = document.createElement('div');
+        loading.className = 'loading-overlay';
+        loading.innerHTML = '<div class="loading-spinner"></div>';
+        document.body.appendChild(loading);
+        return loading;
+    }
+
+    hideLoading(loading) {
+        if (loading) {
+            loading.remove();
+        }
+    }
+
+    showLogoutConfirmation() {
+        return new Promise((resolve) => {
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <h2 class="modal-title">Confirm Logout</h2>
+                    <p class="modal-message">Are you sure you want to logout?</p>
+                    <div class="modal-buttons">
+                        <button class="modal-button cancel">Cancel</button>
+                        <button class="modal-button confirm">Logout</button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+
+            const confirmBtn = modal.querySelector('.confirm');
+            const cancelBtn = modal.querySelector('.cancel');
+
+            confirmBtn.addEventListener('click', () => {
+                modal.remove();
+                resolve(true);
+            });
+
+            cancelBtn.addEventListener('click', () => {
+                modal.remove();
+                resolve(false);
+            });
+        });
+    }
+
     attachEventListeners() {
+        console.log('Attaching event listeners');
+        
         // Navigation
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.addEventListener('click', (e) => {
+        const navItems = document.querySelectorAll('.nav-item[data-view]');
+        console.log('Found nav items:', navItems.length);
+        
+        navItems.forEach(item => {
+            const handleClick = (e) => {
+                console.log('Nav item clicked:', e.currentTarget.dataset.view);
                 const view = e.currentTarget.dataset.view;
                 if (view) {
                     this.switchContent(view);
                 }
-            });
+            };
+            
+            item.removeEventListener('click', handleClick);
+            item.addEventListener('click', handleClick);
         });
 
         // Logout
         const logoutBtn = document.getElementById('logout-btn');
+        console.log('Logout button found:', logoutBtn);
+        
         if (logoutBtn) {
-            logoutBtn.addEventListener('click', () => {
-                this.app.stateService.logout();
-                this.app.routerService.navigateTo('/');
-            });
+            console.log('Adding click listener to logout button');
+            const handleLogout = async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+
+                // Show confirmation modal
+                const confirmed = await this.showLogoutConfirmation();
+                if (!confirmed) return;
+
+                // Show loading
+                const loading = this.showLoading();
+                
+                try {
+                    console.log('Logout button clicked');
+                    const success = await this.app.stateService.logout();
+                    
+                    if (success) {
+                        this.showNotification('Logged out successfully', 'success');
+                        window.location.href = '/';
+                    } else {
+                        this.showNotification('Logout failed', 'error');
+                    }
+                } catch (error) {
+                    console.error('Logout error:', error);
+                    this.showNotification('An error occurred during logout', 'error');
+                } finally {
+                    this.hideLoading(loading);
+                }
+            };
+            
+            logoutBtn.removeEventListener('click', handleLogout);
+            logoutBtn.addEventListener('click', handleLogout);
+        } else {
+            console.error('Logout button not found in DOM');
         }
     }
 
