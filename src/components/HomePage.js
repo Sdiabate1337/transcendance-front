@@ -1,28 +1,108 @@
-import { stateService } from '../services/StateService.js';
+import { StateService } from '../services/StateService.js';
+import { UserService } from '../services/UserService.js';
 
 export class HomePage {
+
+    getCurrentViewFromURL() {
+        const path = window.location.pathname;
+        if (path === '/home') return 'profile';
+        const match = path.match(/\/home\/(\w+)/);
+        return match ? match[1] : 'profile';
+    }
+
     constructor(app) {
         this.app = app;
-        this.currentContent = 'profile'; // Default view
-        console.log('HomePage constructor called');
+        this.isInitialized = false;
+        this.lastRenderedState = null;
+        this.userProfile = null;
+        this.currentTime = ''; // Add time tracking
+        this.userLogin = ''; // Add user login tracking
+        
+        // Get current view from URL
+        this.currentContent = this.getCurrentViewFromURL();
+        
+        // Start time updates
+        this.startTimeUpdates();
+        
+        // Load user profile immediately
+        this.loadUserProfile();
+        
+        // Initialize page
         this.render();
+        this.attachEventListeners();
         
-        // Ensure event listeners are attached after a small delay
-        setTimeout(() => {
-            this.attachEventListeners();
-        }, 0);
-        
-        // Add state change listener
-        this.app.stateService.subscribe(() => {
-            this.render();
-            this.attachEventListeners();
+        // Add state change listener with check for actual changes
+        this.unsubscribe = this.app.stateService.subscribe(async (state) => {
+            // Update time and user info
+            this.currentTime = state.ui?.currentTime || '';
+            this.userLogin = state.ui?.userLogin || '';
+            
+            // Update profile if needed
+            try {
+                const newProfile = await this.app.userService.getUserProfile();
+                if (JSON.stringify(newProfile) !== JSON.stringify(this.userProfile)) {
+                    this.userProfile = newProfile;
+                    this.render();
+                }
+            } catch (error) {
+                console.error('Error updating profile:', error);
+            }
         });
+
+        // Listen for popstate events to handle browser back/forward
+        this.handlePopState = () => {
+            const newView = this.getCurrentViewFromURL();
+            if (newView !== this.currentContent) {
+                this.currentContent = newView;
+                this.render();
+            }
+        };
+        window.addEventListener('popstate', this.handlePopState);
+    }
+
+
+    startTimeUpdates() {
+        // Update time every minute
+        this.timeInterval = setInterval(() => {
+            const now = new Date();
+            this.currentTime = now.toISOString()
+                .replace('T', ' ')
+                .replace(/\.\d+Z$/, '');
+            this.render();
+        }, 60000);
+    }
+
+    async loadUserProfile() {
+        try {
+            const profile = await this.app.userService.getUserProfile();
+            if (JSON.stringify(profile) !== JSON.stringify(this.userProfile)) {
+                this.userProfile = profile;
+                this.render();
+            }
+        } catch (error) {
+            console.error('Error loading user profile:', error);
+            this.showNotification('Failed to load profile', 'error');
+        }
     }
 
     render() {
         console.log('HomePage render called');
-        // First, remove old event listeners if elements exist
-        this.removeEventListeners();
+        
+        const currentState = {
+            content: this.currentContent,
+            profile: this.userProfile,
+            currentTime: this.currentTime,
+            userLogin: this.userLogin
+        };
+        
+        // Skip render if state hasn't changed
+        if (this.lastRenderedState && 
+            JSON.stringify(currentState) === JSON.stringify(this.lastRenderedState)) {
+            console.log('Skipping render - no state change');
+            return;
+        }
+        
+        this.lastRenderedState = currentState;
         
         const template = `
             <div class="home-container">
@@ -34,25 +114,31 @@ export class HomePage {
                             <span class="logo-text">FT_PONG</span>
                         </div>
 
+                        <!-- User Info -->
+                        <div class="user-info">
+                            <span class="user-login">${this.userLogin}</span>
+                            <span class="current-time">${this.currentTime}</span>
+                        </div>
+
                         <!-- Navigation -->
                         <nav class="sidebar-nav">
-                            <button class="nav-item active" data-view="profile">
+                            <button class="nav-item ${this.currentContent === 'profile' ? 'active' : ''}" data-view="profile">
                                 <i class="nav-icon">👤</i>
                                 <span>Profile</span>
                             </button>
-                            <button class="nav-item" data-view="play">
+                            <button class="nav-item ${this.currentContent === 'play' ? 'active' : ''}" data-view="play">
                                 <i class="nav-icon">🎮</i>
                                 <span>Play</span>
                             </button>
-                            <button class="nav-item" data-view="leaderboard">
+                            <button class="nav-item ${this.currentContent === 'leaderboard' ? 'active' : ''}" data-view="leaderboard">
                                 <i class="nav-icon">🏆</i>
                                 <span>Leaderboard</span>
                             </button>
-                            <button class="nav-item" data-view="chat">
+                            <button class="nav-item ${this.currentContent === 'chat' ? 'active' : ''}" data-view="chat">
                                 <i class="nav-icon">💬</i>
                                 <span>Chat</span>
                             </button>
-                            <button class="nav-item" data-view="settings">
+                            <button class="nav-item ${this.currentContent === 'settings' ? 'active' : ''}" data-view="settings">
                                 <i class="nav-icon">⚙️</i>
                                 <span>Settings</span>
                             </button>
@@ -77,7 +163,11 @@ export class HomePage {
             </div>
         `;
 
-        document.querySelector('#app').innerHTML = template;
+        const appElement = document.querySelector('#app');
+        if (appElement && appElement.innerHTML !== template) {
+            appElement.innerHTML = template;
+            this.attachEventListeners();
+        }
     }
 
     removeEventListeners() {
@@ -112,33 +202,132 @@ export class HomePage {
     }
 
     getProfileTemplate() {
-        const user = this.app.stateService.state.auth.user;
+        if (!this.userProfile) {
+            return `
+                <div class="profile-container">
+                    <div class="loading-spinner"></div>
+                </div>
+            `;
+        }
+
+        const { displayName, login, avatar, stats, achievements } = this.userProfile;
+        
         return `
             <div class="profile-container">
-                <h1>Profile</h1>
-                <div class="profile-content">
-                    <div class="profile-header">
-                        <div class="profile-avatar">
-                            <img src="${user?.avatar || 'assets/images/default-avatar.png'}" alt="Profile">
-                        </div>
-                        <div class="profile-info">
-                            <h2>${user?.username || 'User'}</h2>
-                            <p class="status">Online</p>
+                <!-- Profile Card -->
+                <div class="profile-card">
+                    <div class="status-indicator">
+                        <span class="status-dot"></span>
+                        <span>Avalable</span>
+                    </div>
+                    
+                    <div class="profile-info">
+                        <img src="${avatar}" alt="Profile Picture" class="profile-avatar" />
+                        <div class="profile-name">
+                            <h2>${displayName}</h2>
+                            <p class="username">@${login}</p>
                         </div>
                     </div>
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <span class="stat-value">0</span>
-                            <span class="stat-label">Matches</span>
+
+                    <div class="profile-stats">
+                        <div class="stat">
+                            <span>Rank ${stats.rank}</span>
                         </div>
-                        <div class="stat-card">
-                            <span class="stat-value">0</span>
-                            <span class="stat-label">Wins</span>
+                        <div class="stat">
+                            <span>Score ${stats.wins * 10 + stats.level * 5}</span>
                         </div>
-                        <div class="stat-card">
-                            <span class="stat-value">0</span>
-                            <span class="stat-label">Rank</span>
+                    </div>
+
+                    <div class="social-links">
+                        <a href="#" class="social-link">
+                            <i class="fab fa-github"></i>
+                        </a>
+                        <a href="#" class="social-link">
+                            <i class="fab fa-discord"></i>
+                        </a>
+                        <a href="#" class="social-link">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Win Rate Circle -->
+                <div class="win-rate-card">
+                    <div class="win-rate-circle">
+                        <svg viewBox="0 0 36 36" class="circular-chart">
+                            <path d="M18 2.0845
+                                a 15.9155 15.9155 0 0 1 0 31.831
+                                a 15.9155 15.9155 0 0 1 0 -31.831"
+                                fill="none"
+                                stroke="#eee"
+                                stroke-width="3"
+                            />
+                            <path d="M18 2.0845
+                                a 15.9155 15.9155 0 0 1 0 31.831
+                                a 15.9155 15.9155 0 0 1 0 -31.831"
+                                fill="none"
+                                stroke="#12664F"
+                                stroke-width="3"
+                                stroke-dasharray="${(stats.wins / (stats.wins + stats.losses)) * 100}, 100"
+                            />
+                        </svg>
+                        <div class="win-rate-text">
+                            <span>Winning rate</span>
+                            <strong>${Math.round((stats.wins / (stats.wins + stats.losses)) * 100)}%</strong>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Match History Graph -->
+                <div class="match-history-card">
+                    <div class="date-range">01/01/2025 - 27/01/2025</div>
+                    <div class="history-grid">
+                        ${Array(11).fill(0).map(() => `
+                            <div class="history-column">
+                                <div class="games-played">30</div>
+                                <div class="games-won">26</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <!-- Leaderboard -->
+                <div class="leaderboard-card">
+                    <div class="card-header">
+                        <h3>Leaderboard</h3>
+                        <a href="#" class="view-all">View all</a>
+                    </div>
+                    <div class="leaderboard-list">
+                        ${[
+                            { rank: 1, name: 'pseudo-name', score: 347 },
+                            { rank: 2, name: 'pseudo-name', score: 320 },
+                            { rank: 3, name: 'pseudo-name', score: 300 },
+                            { rank: 4, name: 'pseudo-name', score: 247 }
+                        ].map(player => `
+                            <div class="leaderboard-item ${player.rank === 1 ? 'top-rank' : ''}">
+                                <span class="rank">${player.rank}</span>
+                                <span class="name">${player.name}</span>
+                                <span class="score">${player.score}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <!-- Achievements -->
+                <div class="achievements-card">
+                    <div class="card-header">
+                        <h3>Last achievements</h3>
+                    </div>
+                    <div class="achievements-list">
+                        ${achievements && achievements.length > 0 ? achievements.map(achievement => `
+                            <div class="achievement-item">
+                                <div class="achievement-icon">🏆</div>
+                                <div class="achievement-info">
+                                    <h4>${achievement.name}</h4>
+                                    <p>${achievement.description}</p>
+                                </div>
+                            </div>
+                        `).join('') : '<p class="no-achievements">No achievements yet</p>'}
                     </div>
                 </div>
             </div>
@@ -291,85 +480,44 @@ export class HomePage {
     }
 
     attachEventListeners() {
-        console.log('Attaching event listeners');
-        
-        // Navigation
+        // Only attach if elements don't already have listeners
         const navItems = document.querySelectorAll('.nav-item[data-view]');
-        console.log('Found nav items:', navItems.length);
-        
         navItems.forEach(item => {
-            const handleClick = (e) => {
-                console.log('Nav item clicked:', e.currentTarget.dataset.view);
-                const view = e.currentTarget.dataset.view;
-                if (view) {
-                    this.switchContent(view);
-                }
-            };
-            
-            item.removeEventListener('click', handleClick);
-            item.addEventListener('click', handleClick);
-        });
-
-        // Logout
-        const logoutBtn = document.getElementById('logout-btn');
-        console.log('Logout button found:', logoutBtn);
-        
-        if (logoutBtn) {
-            console.log('Adding click listener to logout button');
-            const handleLogout = async (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-
-                // Show confirmation modal
-                const confirmed = await this.showLogoutConfirmation();
-                if (!confirmed) return;
-
-                // Show loading
-                const loading = this.showLoading();
-                
-                try {
-                    console.log('Logout button clicked');
-                    const success = await this.app.stateService.logout();
-                    
-                    if (success) {
-                        this.showNotification('Logged out successfully', 'success');
-                        window.location.href = '/';
-                    } else {
-                        this.showNotification('Logout failed', 'error');
+            const view = item.dataset.view;
+            if (!item.hasListener) {
+                item.hasListener = true;
+                const handleClick = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (view && view !== this.currentContent) {
+                        this.switchContent(view);
                     }
-                } catch (error) {
-                    console.error('Logout error:', error);
-                    this.showNotification('An error occurred during logout', 'error');
-                } finally {
-                    this.hideLoading(loading);
-                }
-            };
-            
-            logoutBtn.removeEventListener('click', handleLogout);
-            logoutBtn.addEventListener('click', handleLogout);
-        } else {
-            console.error('Logout button not found in DOM');
-        }
-    }
-
-    switchContent(view) {
-        // Update active state
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.classList.remove('active');
-            if (item.dataset.view === view) {
-                item.classList.add('active');
+                };
+                item.removeEventListener('click', handleClick);
+                item.addEventListener('click', handleClick);
             }
         });
 
-        // Update content
-        this.currentContent = view;
-        const contentArea = document.getElementById('content-area');
-        if (contentArea) {
-            contentArea.innerHTML = this.getContentTemplate();
-        }
-    }
+        const logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn && !logoutBtn.hasListener) {
+            logoutBtn.hasListener = true;
+            const handleLogout = async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                try {
+                    const confirmed = await this.showLogoutConfirmation();
+                    if (!confirmed) return;
 
-    destroy() {
-        // Cleanup if needed
-    }
-}
+                    const loading = this.showLoading();
+                    try {
+                        const success = await this.app.stateService.logout();
+                        if (success) {
+                            this.showNotification('Logged out successfully', 'success');
+                            window.location.href = '/';
+                        } else {
+                            this.showNotification('Logout failed', 'error');
+                        }
+                    } finally {
+                        this.hideLoading(loading);
+ 

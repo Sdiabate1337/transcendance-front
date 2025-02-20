@@ -16,30 +16,35 @@
     <title>Pong Masters</title>
     
     <!-- Preload critical assets -->
-    <link rel="preload" href="assets/css/main.css" as="style">
-    <link rel="preload" href="assets/css/auth.css" as="style">
-    <link rel="preload" href="assets/css/landing.css" as="style">
-    <link rel="preload" href="src/app.js" as="script" crossorigin="anonymous">
-
+    <link rel="preload" href="/assets/css/main.css" as="style">
+    <link rel="preload" href="/assets/css/auth.css" as="style">
+    <link rel="preload" href="/assets/css/landing.css" as="style">
+    
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
     
     <!-- Styles -->
-    <link rel="stylesheet" href="styles/reset.css">
-    <link rel="stylesheet" href="styles/landing.css">
-    <link rel="stylesheet" href="styles/main.css">
-    <link rel="stylesheet" href="assets/css/main.css">
-    <link rel="stylesheet" href="assets/css/auth.css">
-    <link rel="stylesheet" href="assets/css/components.css">
-    <link rel="stylesheet" href="assets/css/animations.css">
-    <link rel="stylesheet" href="assets/css/landing.css">
-    <link rel="stylesheet" href="assets/css/about.css">
-    <link rel="stylesheet" href="assets/css/home.css">
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <link rel="stylesheet" href="/assets/css/auth.css">
+    <link rel="stylesheet" href="/assets/css/components.css">
+    <link rel="stylesheet" href="/assets/css/animations.css">
+    <link rel="stylesheet" href="/assets/css/landing.css">
+    <link rel="stylesheet" href="/assets/css/about.css">
+    <link rel="stylesheet" href="/assets/css/home.css">
 
     <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="assets/images/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="/assets/images/favicon.ico">
+    
+    <!-- Module preloads -->
+    <link rel="modulepreload" href="/src/app.js">
+    <link rel="modulepreload" href="/src/components/HomePage.js">
+    <link rel="modulepreload" href="/src/services/UserService.js">
+    <link rel="modulepreload" href="/src/services/StateService.js">
+    <link rel="modulepreload" href="/src/services/RouterService.js">
+
+    <!-- Favicon -->
 </head>
 <body>
     <div id="app">

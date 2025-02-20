@@ -2,6 +2,7 @@ import { LoginPage } from './components/auth/LoginPage.js';
 import { API_CONFIG } from './config/api.js';
 import { RouterService } from './services/RouterService.js';
 import { StateService } from './services/StateService.js';
+import { UserService } from './services/UserService.js';
 import { LandingPage } from './components/LandingPage.js';
 import { HomePage } from './components/HomePage.js';
 import AboutPage from './components/AboutPage.js';
@@ -10,6 +11,7 @@ export class App {
     constructor() {
         this.stateService = new StateService();
         this.routerService = new RouterService(this);
+        this.userService = new UserService(this);
         this.currentPage = null;
         this.appContainer = document.getElementById('app');
         

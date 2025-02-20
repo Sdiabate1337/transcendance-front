@@ -3,15 +3,40 @@ const path = require('path');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Serve static files from the root directory
-app.use(express.static(__dirname));
-
-// Handle SPA routing - send all requests to index.html
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+// Middleware to handle MIME types and compression
+app.use((req, res, next) => {
+    // Set proper MIME types
+    if (req.url.endsWith('.js')) {
+        res.type('application/javascript');
+    } else if (req.url.endsWith('.css')) {
+        res.type('text/css');
+    }
+    
+    // Enable CORS for development
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+    
+    // Disable caching for development
+    res.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.header('Pragma', 'no-cache');
+    res.header('Expires', '0');
+    
+    next();
 });
 
-app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`);
-    console.log(`Serving files from: ${__dirname}`);
-});
+// Serve static files with proper options
+app.use(express.static(path.join(__dirname), {
+    etag: false,
+    lastModified: false,
+    maxAge: 0,
+    index: false
+}));
+
+// Additional static directories with specific paths
+app.use('/src', express.static(path.join(__dirname, 'src'), {
+    etag: false,
+    lastModified: false,
+    maxAge: 0
+}));
+
+app.use('/assets', expre

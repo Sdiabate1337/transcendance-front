@@ -260,10 +260,9 @@ export class LandingPage {
     handle42Login() {
         const clientId = '42-oauth-client-id'; // Replace with your actual 42 OAuth client ID
         const redirectUri = encodeURIComponent(window.location.origin + '/auth/42/callback');
-        const scope = 'public';
+        const state = this.generateRandomState();
         
-        const authUrl = `https://api.intra.42.fr/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}`;
+        // Store state for verification
+        sessionStorage.setItem('oauth_state', state);
         
-        window.location.href = authUrl;
-    }
-}
+        const authUrl = `https://api.intra.42.fr/oauth/authorize?client_id=${clientId}

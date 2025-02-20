@@ -4,22 +4,65 @@ export class RouterService {
         this.routes = {
             '/': () => this.showLandingPage(),
             '/login': () => this.showLoginPage(),
-            '/home': () => this.showHomePage(),
+            '/home': () => this.showHomePage('profile'), // Default sub-route
+            '/home/profile': () => this.showHomePage('profile'),
+            '/home/play': () => this.showHomePage('play'),
+            '/home/leaderboard': () => this.showHomePage('leaderboard'),
+            '/home/chat': () => this.showHomePage('chat'),
+            '/home/settings': () => this.showHomePage('settings'),
             '/about': () => this.showAboutPage()
         };
 
-        this.protectedRoutes = ['/home'];
+        this.protectedPaths = ['/home', '/home/profile', '/home/play', '/home/leaderboard', '/home/chat', '/home/settings'];
+        // Add cache clearing method to window for debug purposes
+        window.clearNavigationCache = () => this.clearNavigationCache();
+        this.currentPage = null;
         this.initializeRouter();
     }
 
+     // Add this method to clear navigation cache
+     clearNavigationCache() {
+        if (window.performance && window.performance.navigation) {
+            console.log('Clearing navigation cache...');
+            
+            // Clear application cache
+            if (window.applicationCache) {
+                window.applicationCache.delete();
+            }
+            
+            // Clear service workers
+            if (navigator.serviceWorker) {
+                navigator.serviceWorker.getRegistrations().then(registrations => {
+                    registrations.forEach(registration => {
+                        registration.unregister();
+                    });
+                });
+            }
+            
+            // Clear browser back/forward cache (bfcache)
+            window.onunload = () => {};
+            
+            // Reload the page without cache
+            window.location.reload(true);
+        }
+    }
+
     initializeRouter() {
+        // Handle browser back/forward buttons
         window.addEventListener('popstate', () => this.handleRoute());
+
+        // Handle clicks on elements with data-route attribute
         document.addEventListener('click', (e) => {
-            if (e.target.matches('[data-route]')) {
+            const routeElement = e.target.closest('[data-route]');
+            if (routeElement) {
                 e.preventDefault();
-                this.navigateTo(e.target.getAttribute('data-route'));
+                const route = routeElement.getAttribute('data-route');
+                this.navigateTo(route);
             }
         });
+
+        // Initial route handling
+        this.handleRoute();
     }
 
     navigateTo(route) {
@@ -30,62 +73,6 @@ export class RouterService {
     handleRoute() {
         const path = window.location.pathname;
         
-        // Check if route is protected
-        if (this.protectedRoutes.includes(path)) {
+        // Check if the route is protected
+        if (this.isProtectedRoute(path)) {
             if (!this.app.stateService.isAuthenticated()) {
-                console.log('Access denied: Authentication required');
-                this.navigateTo('/');
-                return;
-            }
-        }
-
-        const route = this.routes[path] || this.routes['/'];
-        route();
-    }
-
-    showLandingPage() {
-        // If user is authenticated, redirect to home
-        if (this.app.stateService.isAuthenticated()) {
-            this.navigateTo('/home');
-            return;
-        }
-        
-        import('../components/LandingPage.js').then(module => {
-            const landingPage = new module.LandingPage(this.app);
-            this.app.setCurrentPage(landingPage);
-            
-            // Hide debug panel when showing landing page
-            const debugPanel = document.getElementById('debug-panel');
-            if (debugPanel) {
-                debugPanel.style.display = 'none';
-            }
-        });
-    }
-
-    showLoginPage() {
-        // If user is authenticated, redirect to home
-        if (this.app.stateService.isAuthenticated()) {
-            this.navigateTo('/home');
-            return;
-        }
-
-        import('../components/LoginPage.js').then(module => {
-            const loginPage = new module.LoginPage(this.app);
-            this.app.setCurrentPage(loginPage);
-        });
-    }
-
-    showHomePage() {
-        import('../components/HomePage.js').then(module => {
-            const homePage = new module.HomePage(this.app);
-            this.app.setCurrentPage(homePage);
-        });
-    }
-
-    showAboutPage() {
-        import('../components/AboutPage.js').then(module => {
-            const aboutPage = new module.AboutPage(this.app);
-            this.app.setCurrentPage(aboutPage);
-        });
-    }
-}
